@@ -15,13 +15,13 @@ st.markdown("# 工时管理")
 user = st.session_state.get('username')
 if user:
     # 获取项目
-    # @st.cache_data
+    # @st.cache_data        # 会缓存到本地，刷新不会清除，所以动态数据不能用
     def get_proj_list():
         file = Path('./data/projects.pkl')
         projs = []
         if file.exists():
             df = pd.read_pickle(file)
-            projs = df.proj_name.to_list()
+            projs = df.proj_name.unique()
         return projs
     
     file = Path('./data/manhour.pkl')
