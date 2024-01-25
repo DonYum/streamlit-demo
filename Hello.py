@@ -1,29 +1,15 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import streamlit as st
+import streamlit_authenticator as stauth
 from streamlit.logger import get_logger
+from pathlib import Path
+import pandas as pd
 
 LOGGER = get_logger(__name__)
 
-
 def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
 
+    st.write(f"# Hi {1}! 👋")
     st.write("# Welcome to Streamlit! 👋")
 
     st.sidebar.success("Select a demo above.")
@@ -48,4 +34,38 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    st.set_page_config(
+        page_title="Hello",
+        page_icon="👋",
+    )
+    # _pwd = stauth.Hasher(['123']).generate()[0]
+    # credentials = dict(
+    #     usernames=dict(
+    #         llm={'name': 'LLM领域用户', 'email': 'aaa@mail.com', 'password': _pwd},
+    #         Admin={'name': '管理员', 'email': 'aaa@mail.com', 'password': _pwd},
+    #     )
+    # )
+    user_file = Path('./data/users.pkl')
+    if not user_file.exists():
+        st.error('用户数据文件不存在，请检查！')
+    else:
+        df = pd.read_pickle(user_file)
+        # df = df.reset_index(drop=False)
+        credentials = dict(usernames={})
+        for i in range(len(df)):
+            credentials['usernames'][df.iloc[i].username] = {'name': df.iloc[i].display_name, 'password': df.iloc[i].password}
+
+    authenticator = stauth.Authenticate(credentials, 'some_cookie_name', 'some_signature_key', cookie_expiry_days=1)
+    
+    name, authentication_status, username = authenticator.login('Login', 'main')
+
+    if authentication_status:  # 登录成功
+        st.write(f'Welcome *{name}*')
+        LOGGER.info(f'st.session_state={st.session_state}')
+
+        run()
+        authenticator.logout('Logout', 'main')
+    elif authentication_status == False:  # 登录失败
+        st.error('Username/password is incorrect')
+    elif authentication_status is None:  # 未输入登录信息
+        st.warning('Please enter your username and password')

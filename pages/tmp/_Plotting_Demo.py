@@ -51,6 +51,7 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 5 seconds. Enjoy!"""
 )
 
-plotting_demo()
+if st.session_state.get('username'):
+    plotting_demo()
 
-show_code(plotting_demo)
+    show_code(plotting_demo)
